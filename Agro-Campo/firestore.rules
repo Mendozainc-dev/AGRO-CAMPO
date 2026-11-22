@@ -14,12 +14,40 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol in ['tecnico', 'admin'];
     }
 
+    function canCreateCatalogRecords() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+    }
+
+    function validText(value, maxLength) {
+      return value is string && value.size() > 0 && value.size() <= maxLength;
+    }
+
     match /productores/{productorId} {
       allow read: if canReadFieldCatalog();
+      allow create: if canCreateCatalogRecords()
+        && request.resource.data.keys().hasOnly(['nombre', 'comunidad', 'telefono', 'createdAt'])
+        && validText(request.resource.data.nombre, 150)
+        && validText(request.resource.data.comunidad, 100)
+        && request.resource.data.telefono is string
+        && request.resource.data.telefono.size() <= 30
+        && request.resource.data.createdAt is string
+        && request.resource.data.createdAt.size() == 24;
     }
 
     match /parcelas/{parcelaId} {
       allow read: if canReadFieldCatalog();
+      allow create: if canCreateCatalogRecords()
+        && request.resource.data.keys().hasOnly(['productorId', 'cultivo', 'superficie', 'ubicacion'])
+        && validText(request.resource.data.productorId, 128)
+        && request.resource.data.productorId.matches('[^/]+')
+        && exists(/databases/$(database)/documents/productores/$(request.resource.data.productorId))
+        && request.resource.data.cultivo in ['fresa', 'sorgo', 'hortalizas']
+        && request.resource.data.superficie is number
+        && request.resource.data.superficie > 0
+        && request.resource.data.superficie < math.pow(10, 308)
+        && validText(request.resource.data.ubicacion, 200);
     }
 
     match /usuarios/{uid} {

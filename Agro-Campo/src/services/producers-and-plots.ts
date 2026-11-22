@@ -1,6 +1,7 @@
-import { collection, getDocsFromServer } from 'firebase/firestore';
+import { addDoc, collection, doc, getDocFromServer, getDocsFromServer } from 'firebase/firestore';
 
 import { getDatabase } from './firebase';
+import { getAppAuth } from './firebase-auth';
 
 export type Plot = {
   id: string;
@@ -54,4 +55,44 @@ export async function readProducersAndPlots(): Promise<ProducerWithPlots[]> {
         .sort((left, right) => bySpanishName.compare(left.cultivo, right.cultivo)),
     };
   }).sort((left, right) => bySpanishName.compare(left.nombre, right.nombre));
+}
+
+export const crops = ['fresa', 'sorgo', 'hortalizas'] as const;
+export type Crop = typeof crops[number];
+
+export async function canCreateCatalogRecords() {
+  const user = getAppAuth().currentUser;
+  if (!user?.emailVerified) return false;
+
+  const profile = await getDocFromServer(doc(getDatabase(), 'usuarios', user.uid));
+  return profile.data()?.rol === 'admin';
+}
+
+export async function createProducer(input: { nombre: string; comunidad: string; telefono: string }) {
+  const nombre = input.nombre.trim();
+  const comunidad = input.comunidad.trim();
+  const telefono = input.telefono.trim();
+
+  if (!nombre || nombre.length > 150 || !comunidad || comunidad.length > 100 || telefono.length > 30) {
+    throw new Error('Completa el nombre y la comunidad dentro del límite de cada campo.');
+  }
+
+  await addDoc(collection(getDatabase(), 'productores'), {
+    nombre, comunidad, telefono, createdAt: new Date().toISOString(),
+  });
+}
+
+export async function createPlot(input: { productorId: string; cultivo: Crop; superficie: string; ubicacion: string }) {
+  const ubicacion = input.ubicacion.trim();
+  const area = input.superficie.trim();
+  const superficie = Number(area.replace(',', '.'));
+
+  if (!input.productorId || !crops.includes(input.cultivo) || !ubicacion || ubicacion.length > 200
+    || !/^\d+(?:[.,]\d+)?$/.test(area) || !Number.isFinite(superficie) || superficie <= 0) {
+    throw new Error('Elige un productor y completa la ubicación y una superficie mayor a cero.');
+  }
+
+  await addDoc(collection(getDatabase(), 'parcelas'), {
+    productorId: input.productorId, cultivo: input.cultivo, superficie, ubicacion,
+  });
 }

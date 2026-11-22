@@ -8,6 +8,20 @@ service cloud.firestore {
         && request.auth.token.email_verified == true;
     }
 
+    function canReadFieldCatalog() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol in ['tecnico', 'admin'];
+    }
+
+    match /productores/{productorId} {
+      allow read: if canReadFieldCatalog();
+    }
+
+    match /parcelas/{parcelaId} {
+      allow read: if canReadFieldCatalog();
+    }
+
     match /usuarios/{uid} {
       allow get: if isVerifiedOwner(uid);
 

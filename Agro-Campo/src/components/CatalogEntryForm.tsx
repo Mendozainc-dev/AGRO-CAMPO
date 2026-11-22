@@ -112,7 +112,7 @@ export function CatalogEntryForm({ producers, onSaved }: CatalogEntryFormProps) 
           <Text style={styles.label}>Cultivo</Text>
           <View style={styles.tabs}>
             {crops.map((value) => (
-              <GlassButton key={value} label={value[0].toUpperCase() + value.slice(1)} variant="toggle" selected={crop === value} disabled={saving} onPress={() => setCrop(value)} />
+              <GlassButton key={value} label={value[0].toUpperCase() + value.slice(1)} variant="choice" selected={crop === value} disabled={saving} onPress={() => setCrop(value)} />
             ))}
           </View>
           <GlassInput label="Superficie (ha)" value={area} onChangeText={setArea} keyboardType="decimal-pad" editable={!saving} />

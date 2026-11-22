@@ -1,7 +1,8 @@
 import { FirebaseError } from 'firebase/app';
 import { useRef, useState } from 'react';
-import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, StyleSheet, Text, View } from 'react-native';
 
+import { FieldPlotSelector } from '@/components/FieldPlotSelector';
 import { GlassButton } from '@/components/ui/GlassButton';
 import { GlassInput } from '@/components/ui/GlassInput';
 import { createApplication } from '@/services/applications';
@@ -49,21 +50,7 @@ export function ApplicationEntryForm({ plots, busy, onBusyChange, onSaved }: App
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>Parcela</Text>
-      {plots.length === 0 && <Text style={styles.body}>Primero registra una parcela en el padrón.</Text>}
-      {plots.map((plot) => (
-        <Pressable
-          key={plot.id}
-          accessibilityRole="radio"
-          accessibilityState={{ checked: plot.id === plotId, disabled: busy }}
-          disabled={busy}
-          onPress={() => setPlotId(plot.id)}
-          style={[styles.option, plot.id === plotId && styles.selected]}
-        >
-          <Text style={styles.crop}>{plot.cultivo}</Text>
-          <Text style={styles.body}>{plot.ubicacion}</Text>
-        </Pressable>
-      ))}
+      <FieldPlotSelector plots={plots} plotId={plotId} busy={busy} onSelect={setPlotId} />
       <GlassInput label="Producto o insumo" value={product} onChangeText={setProduct} maxLength={150} editable={!busy} />
       <GlassInput label="Dosis aplicada" value={dose} onChangeText={setDose} maxLength={100} editable={!busy} />
       <GlassInput label="Fecha (AAAA-MM-DD)" value={date} onChangeText={setDate} maxLength={10} editable={!busy} />
@@ -75,10 +62,5 @@ export function ApplicationEntryForm({ plots, busy, onBusyChange, onSaved }: App
 
 const styles = StyleSheet.create({
   card: { gap: 12, padding: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: '#d3dfd1', borderRadius: 10 },
-  option: { padding: 10, gap: 3, borderWidth: 1, borderColor: '#d3dfd1', borderRadius: 6 },
-  selected: { backgroundColor: '#e7f1e5', borderColor: '#4a7956' },
-  label: { color: '#253128', fontSize: 14, fontWeight: '700' },
-  crop: { color: '#253128', fontSize: 14, fontWeight: '700', textTransform: 'capitalize' },
-  body: { color: '#425447', fontSize: 14, lineHeight: 20 },
   error: { color: '#87292a', fontSize: 14 },
 });

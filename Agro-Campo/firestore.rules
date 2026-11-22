@@ -88,6 +88,24 @@ service cloud.firestore {
         && request.resource.data.fecha.matches('[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])');
     }
 
+    // cosechas: parcelaId, volumen (toneladas), comprador y fecha de recolección.
+    function validHarvest(data) {
+      return data.keys().hasOnly(['parcelaId', 'volumen', 'comprador', 'fecha'])
+        && validText(data.parcelaId, 128)
+        && data.parcelaId.matches('[^/]+')
+        && exists(/databases/$(database)/documents/parcelas/$(data.parcelaId))
+        && data.volumen is number
+        && data.volumen > 0 && data.volumen < math.pow(10, 308)
+        && validText(data.comprador, 150)
+        && data.fecha is string
+        && data.fecha.matches('[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])');
+    }
+
+    match /cosechas/{cosechaId} {
+      allow read: if canReadFieldCatalog();
+      allow create: if canReadFieldCatalog() && validHarvest(request.resource.data);
+    }
+
     match /productores/{productorId} {
       allow read: if canReadFieldCatalog();
       allow create: if canCreateCatalogRecords()

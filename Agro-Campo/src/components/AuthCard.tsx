@@ -6,34 +6,58 @@ import { GlassBackdrop } from '@/components/ui/GlassBackdrop';
 import { GlassButton } from '@/components/ui/GlassButton';
 import { GlassInput } from '@/components/ui/GlassInput';
 
+import type { useAccount } from '@/hooks/use-account';
+import { loginWithEmail, registerWithEmail } from '@/services/account';
+import { loginWithGoogle } from '@/services/google-account';
+
 type AuthMode = 'login' | 'signup';
 
-export function AuthCard() {
+type AuthCardProps = { account: Pick<ReturnType<typeof useAccount>, 'busy' | 'notice' | 'run' | 'setNotice'> };
+
+export function AuthCard({ account }: AuthCardProps) {
   const [mode, setMode] = useState<AuthMode>('login');
-  const [showNotice, setShowNotice] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const isSignup = mode === 'signup';
   const actionLabel = isSignup ? 'Crear cuenta' : 'Iniciar sesión';
   const googleLabel = isSignup ? 'Registrarse con Google' : 'Iniciar sesión con Google';
 
   const changeMode = (nextMode: AuthMode) => {
-    if (mode === nextMode) return;
+    if (account.busy || mode === nextMode) return;
     Keyboard.dismiss();
-    setShowNotice(false);
+    account.setNotice('');
+    setPassword('');
     setMode(nextMode);
   };
 
-  const showPreviewMessage = () => {
+  const submitEmail = () => account.run(async () => {
     Keyboard.dismiss();
-    setShowNotice(true);
-  };
+    const address = email.trim();
+    const name = fullName.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address) || !password || (isSignup && !name)) {
+      throw new Error('Completa los campos con un correo válido.');
+    }
+
+    if (isSignup) {
+      await registerWithEmail(name, address, password);
+      setMode('login');
+      setPassword('');
+      return { notice: 'Revisa tu correo para verificar tu cuenta y después inicia sesión.' };
+    }
+
+    const profileName = await loginWithEmail(address, password);
+    setPassword('');
+    return { name: profileName };
+  });
 
   return (
     <View style={styles.card}>
-      <GlassBackdrop key={`${mode}-${showNotice}`} radius={styles.card.borderRadius} />
+      <GlassBackdrop key={`${mode}-${!!account.notice}`} radius={styles.card.borderRadius} />
       <View pointerEvents="none" style={styles.innerHighlight} />
       <View style={styles.tabs}>
-        <GlassButton label="Iniciar sesión" variant="toggle" selected={!isSignup} onPress={() => changeMode('login')} />
-        <GlassButton label="Crear cuenta" variant="toggle" selected={isSignup} onPress={() => changeMode('signup')} />
+        <GlassButton label="Iniciar sesión" variant="toggle" selected={!isSignup} disabled={account.busy} onPress={() => changeMode('login')} />
+        <GlassButton label="Crear cuenta" variant="toggle" selected={isSignup} disabled={account.busy} onPress={() => changeMode('signup')} />
       </View>
       <View style={styles.intro}>
         <Text accessibilityRole="header" style={styles.heading}>
@@ -43,7 +67,7 @@ export function AuthCard() {
       </View>
       <View key={mode} style={styles.fields}>
         {isSignup && (
-          <GlassInput label="Nombre completo" placeholder="Tu nombre" autoComplete="name" autoCapitalize="words" />
+          <GlassInput label="Nombre completo" placeholder="Tu nombre" autoComplete="name" autoCapitalize="words" value={fullName} onChangeText={setFullName} editable={!account.busy} />
         )}
         <GlassInput
           label="Correo institucional"
@@ -52,6 +76,9 @@ export function AuthCard() {
           autoCorrect={false}
           keyboardType="email-address"
           autoComplete="email"
+          value={email}
+          onChangeText={setEmail}
+          editable={!account.busy}
         />
         <GlassInput
           label="Contraseña"
@@ -59,21 +86,29 @@ export function AuthCard() {
           autoCapitalize="none"
           autoCorrect={false}
           autoComplete={isSignup ? 'new-password' : 'current-password'}
+          value={password}
+          onChangeText={setPassword}
+          editable={!account.busy}
           secureTextEntry
         />
       </View>
       <View style={styles.actions}>
-        <GlassButton label={actionLabel} onPress={showPreviewMessage} />
+        <GlassButton label={actionLabel} onPress={submitEmail} disabled={account.busy} />
         <GlassButton
           label={googleLabel}
           variant="secondary"
           leadingIcon={<Image source={require('@/assets/images/google-g.png')} style={styles.googleIcon} contentFit="contain" accessible={false} />}
-          onPress={showPreviewMessage}
+          disabled={account.busy}
+          onPress={() => account.run(async () => {
+            const profileName = await loginWithGoogle();
+            setPassword('');
+            return { name: profileName };
+          })}
         />
       </View>
-      {showNotice && (
+      {account.notice !== '' && (
         <Text accessibilityRole="alert" style={styles.notice}>
-          La autenticación aún no está habilitada en esta demo.
+          {account.notice}
         </Text>
       )}
     </View>

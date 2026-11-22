@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -5,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AuthCard } from '@/components/AuthCard';
 
-export function HomeInitialScreen() {
+export function HomeInitialScreen({ account }: ComponentProps<typeof AuthCard>) {
   return (
     <View style={styles.screen}>
       <StatusBar style="light" />
@@ -18,7 +19,7 @@ export function HomeInitialScreen() {
               <Text accessibilityRole="header" style={styles.title}>AgroCampo</Text>
               <Text style={styles.subtitle}>Bitácora digital de Pénjamo</Text>
             </View>
-            <AuthCard />
+            <AuthCard account={account} />
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>

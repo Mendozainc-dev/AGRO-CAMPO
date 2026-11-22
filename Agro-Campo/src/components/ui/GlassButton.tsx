@@ -8,23 +8,25 @@ type GlassButtonProps = {
   onPress: () => void;
   variant?: 'primary' | 'secondary' | 'toggle';
   selected?: boolean;
+  disabled?: boolean;
   leadingIcon?: ReactNode;
 };
 
-export function GlassButton({ label, onPress, variant = 'primary', selected = false, leadingIcon }: GlassButtonProps) {
+export function GlassButton({ label, onPress, variant = 'primary', selected = false, disabled = false, leadingIcon }: GlassButtonProps) {
   const isToggle = variant === 'toggle';
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={isToggle ? { selected } : undefined}
+      accessibilityState={{ disabled, selected: isToggle ? selected : undefined }}
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
         variant === 'secondary' && styles.secondary,
         isToggle && styles.toggle,
         isToggle && selected && styles.selected,
-        pressed && styles.pressed,
+        (pressed || disabled) && styles.pressed,
       ]}
     >
       <GlassBackdrop radius={styles.button.borderRadius} />

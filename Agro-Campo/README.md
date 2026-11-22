@@ -54,3 +54,24 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Firebase
+
+Copia `.env.example` como `.env.local` en esta carpeta y completa los valores
+con el objeto `firebaseConfig` de la aplicación web del proyecto de Firebase.
+Confirma que `EXPO_PUBLIC_FIRESTORE_DATABASE_ID` coincide con el identificador
+de tu base en Firestore. Reinicia Expo después de cambiar estas variables.
+
+En Firebase Authentication habilita **Correo electrónico/Contraseña**.
+Para probar también Google en web, habilita **Google** y añade el dominio de
+la aplicación web a los dominios autorizados de Authentication.
+
+Para verificar la conexión en Expo Go, crea una cuenta de prueba, verifica su
+correo e inicia sesión. El primer acceso con correo verificado crea el perfil
+`usuarios/{uid}` como `tecnico` si el documento no existe. Un inicio de sesión
+posterior lee el perfil existente. La app abre la pantalla de la bitácora después de cargar el perfil.
+
+Las reglas de la base deben permitir a la persona autenticada y verificada
+leer su propio documento y crearlo con su UID y correo del token y rol
+`tecnico`. La asignación del rol `admin` debe quedar bajo control
+administrativo. El proyecto móvil no despliega reglas ni cambia proveedores.

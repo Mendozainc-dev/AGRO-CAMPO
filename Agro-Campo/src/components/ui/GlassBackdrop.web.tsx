@@ -1,15 +1,10 @@
-import { useEffect, useState } from 'react';
 import LiquidGlass from 'liquid-glass-react';
 
+import { useHydrated } from '@/hooks/use-hydrated';
+
 export function GlassBackdrop({ radius }: { radius: number }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    // The package reads browser globals during render.
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
+  // The package reads browser globals during render.
+  if (!useHydrated()) return null;
 
   return (
     <div

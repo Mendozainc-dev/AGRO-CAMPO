@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import type { ComponentType } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -60,7 +61,15 @@ export function FieldLogScreen({ name }: FieldLogScreenProps) {
       <ScrollView style={styles.main} contentContainerStyle={styles.scroll}>
         <View style={styles.content}>
           <View style={styles.section}>
-            <Text style={styles.brand}>AgroCampo Pénjamo</Text>
+            <View style={styles.brandRow}>
+              <Image
+                source={require('@/assets/images/LogoAgroCampo.png')}
+                style={styles.logo}
+                contentFit="contain"
+                accessible={false}
+              />
+              <Text style={styles.brand}>AgroCampo Pénjamo</Text>
+            </View>
             <Text accessibilityRole="header" style={styles.title}>Bitácora de campo</Text>
             <Text style={styles.body}>Hola, {name}</Text>
           </View>
@@ -104,7 +113,9 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 24, paddingVertical: 28 },
   content: { width: '100%', maxWidth: 560, alignSelf: 'center', gap: 24 },
   section: { gap: 10 },
-  brand: { color: '#34553a', fontSize: 14, fontWeight: '700' },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  logo: { width: 40, height: 40 },
+  brand: { color: '#34553a', fontSize: 14, fontWeight: '700', flexShrink: 1 },
   title: { color: '#172b1b', fontSize: 34, fontWeight: '700' },
   body: { color: '#37493b', fontSize: 15 },
   bar: { backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#cbd5c8' },

@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
@@ -6,40 +7,42 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GlassButton } from '@/components/ui/GlassButton';
 
+import { ProducersAndPlotsScreen } from './ProducersAndPlotsScreen';
+import { InspectionsScreen } from './InspectionsScreen';
+import { ApplicationsScreen } from './ApplicationsScreen';
+import { HarvestsScreen } from './HarvestsScreen';
+
 const modules = [
   {
     id: 'parcelas',
     label: 'Parcelas',
-    name: 'Productores y parcelas',
-    detail: 'Padrón de productores, cultivos y ubicación de parcelas.',
+    Screen: ProducersAndPlotsScreen,
+    accessibilityLabel: 'Productores y parcelas',
     icon: { ios: 'map', android: 'map', web: 'map' },
   },
   {
     id: 'inspecciones',
     label: 'Inspecciones',
-    name: 'Inspecciones',
-    detail: 'Visitas de campo, hallazgos, ubicación y evidencia fotográfica.',
+    Screen: InspectionsScreen,
     icon: { ios: 'clipboard', android: 'assignment', web: 'assignment' },
   },
   {
     id: 'aplicaciones',
     label: 'Aplicaciones',
-    name: 'Aplicaciones',
-    detail: 'Insumos aplicados por parcela, dosis y fecha.',
+    Screen: ApplicationsScreen,
     icon: { ios: 'drop', android: 'water_drop', web: 'water_drop' },
   },
   {
     id: 'cosechas',
     label: 'Cosechas',
-    name: 'Cosechas',
-    detail: 'Volumen cosechado y comprador por parcela.',
+    Screen: HarvestsScreen,
     icon: { ios: 'basket', android: 'shopping_basket', web: 'shopping_basket' },
   },
 ] as const satisfies readonly {
   id: string;
   label: string;
-  name: string;
-  detail: string;
+  Screen: ComponentType;
+  accessibilityLabel?: string;
   icon: SymbolViewProps['name'];
 }[];
 
@@ -54,6 +57,7 @@ export function FieldLogScreen({ name, notice, signingOut, onSignOut }: FieldLog
   const router = useRouter();
   const { section } = useLocalSearchParams<{ section?: string }>();
   const activeModule = modules.find((module) => module.id === section) ?? modules[0];
+  const ActiveScreen = activeModule.Screen;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
@@ -66,11 +70,7 @@ export function FieldLogScreen({ name, notice, signingOut, onSignOut }: FieldLog
             <Text style={styles.body}>Hola, {name}</Text>
           </View>
 
-          <View style={styles.module}>
-            <Text accessibilityRole="header" style={styles.moduleTitle}>{activeModule.name}</Text>
-            <Text style={styles.body}>{activeModule.detail}</Text>
-            <Text style={styles.status}>En preparación</Text>
-          </View>
+          <ActiveScreen />
 
           <GlassButton
             label={signingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
@@ -90,7 +90,7 @@ export function FieldLogScreen({ name, notice, signingOut, onSignOut }: FieldLog
                 key={module.id}
                 accessibilityRole="tab"
                 accessibilityState={{ selected }}
-                accessibilityLabel={module.name}
+                accessibilityLabel={'accessibilityLabel' in module ? module.accessibilityLabel : module.label}
                 onPress={() => router.setParams({ section: module.id })}
                 style={({ pressed }) => [styles.tab, selected && styles.selected, pressed && styles.pressed]}
               >
@@ -118,17 +118,7 @@ const styles = StyleSheet.create({
   section: { gap: 10 },
   brand: { color: '#34553a', fontSize: 14, fontWeight: '700' },
   title: { color: '#172b1b', fontSize: 34, fontWeight: '700' },
-  module: {
-    gap: 8,
-    padding: 16,
-    backgroundColor: '#fff',
-    borderColor: '#cbd5c8',
-    borderWidth: 1,
-    borderRadius: 10,
-  },
-  moduleTitle: { color: '#20392a', fontSize: 19, fontWeight: '700' },
   body: { color: '#37493b', fontSize: 15 },
-  status: { color: '#536459', fontSize: 13 },
   bar: { backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#cbd5c8' },
   tabs: {
     flexDirection: 'row',

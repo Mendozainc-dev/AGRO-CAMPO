@@ -5,8 +5,6 @@ import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { GlassButton } from '@/components/ui/GlassButton';
-
 import { ProducersAndPlotsScreen } from './ProducersAndPlotsScreen';
 import { InspectionsScreen } from './InspectionsScreen';
 import { ApplicationsScreen } from './ApplicationsScreen';
@@ -48,12 +46,9 @@ const modules = [
 
 type FieldLogScreenProps = {
   name: string;
-  notice: string;
-  signingOut: boolean;
-  onSignOut: () => void;
 };
 
-export function FieldLogScreen({ name, notice, signingOut, onSignOut }: FieldLogScreenProps) {
+export function FieldLogScreen({ name }: FieldLogScreenProps) {
   const router = useRouter();
   const { section } = useLocalSearchParams<{ section?: string }>();
   const activeModule = modules.find((module) => module.id === section) ?? modules[0];
@@ -71,13 +66,6 @@ export function FieldLogScreen({ name, notice, signingOut, onSignOut }: FieldLog
           </View>
 
           <ActiveScreen />
-
-          <GlassButton
-            label={signingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
-            onPress={onSignOut}
-            disabled={signingOut}
-          />
-          {notice !== '' && <Text accessibilityRole="alert" style={styles.body}>{notice}</Text>}
         </View>
       </ScrollView>
 

@@ -6,14 +6,7 @@ export default function Index() {
   const account = useAccount();
 
   if (account.name) {
-    return (
-      <FieldLogScreen
-        name={account.name}
-        notice={account.notice}
-        signingOut={account.busy}
-        onSignOut={account.logout}
-      />
-    );
+    return <FieldLogScreen name={account.name} />;
   }
 
   return <HomeInitialScreen account={account} />;

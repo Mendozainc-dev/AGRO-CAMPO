@@ -8,11 +8,7 @@ import { GlassInput } from '@/components/ui/GlassInput';
 import { createInspection, type InspectionDraft } from '@/services/inspections';
 import type { Plot } from '@/services/producers-and-plots';
 
-function today() {
-  const date = new Date();
-  return [date.getFullYear(), date.getMonth() + 1, date.getDate()]
-    .map((value) => String(value).padStart(2, '0')).join('-');
-}
+import { todayFieldDate } from '@/utils/field-date';
 
 type InspectionEntryFormProps = {
   plots: Plot[];
@@ -24,7 +20,7 @@ export function InspectionEntryForm({ plots, onSaved, onBusyChange }: Inspection
   const [plotId, setPlotId] = useState('');
   const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
   const [draft, setDraft] = useState<InspectionDraft>(() => ({
-    fecha: today(), plagas: '', estadoRiego: '', etapaFenologica: '', observaciones: '',
+    fecha: todayFieldDate(), plagas: '', estadoRiego: '', etapaFenologica: '', observaciones: '',
     brix: '', humidity: '', irrigationSystem: '', soilPh: '',
   }));
   const [error, setError] = useState('');

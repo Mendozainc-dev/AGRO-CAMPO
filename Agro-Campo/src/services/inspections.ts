@@ -2,6 +2,8 @@ import {
   collection, doc, getDocFromServer, getDocsFromServer, limit, orderBy, query, runTransaction,
 } from 'firebase/firestore';
 
+import { isFieldDate } from '@/utils/field-date';
+
 import { getDatabase } from './firebase';
 import { getAppAuth } from './firebase-auth';
 import type { Plot } from './producers-and-plots';
@@ -87,8 +89,7 @@ function getDetails(crop: string, draft: InspectionDraft): Details {
 
 export async function createInspection(plot: Plot, coordinates: Coordinates, draft: InspectionDraft) {
   const fecha = draft.fecha.trim();
-  const date = new Date(fecha + 'T00:00:00Z');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || !Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== fecha) {
+  if (!isFieldDate(fecha)) {
     throw new Error('Ingresa una fecha válida en formato AAAA-MM-DD.');
   }
 

@@ -74,6 +74,20 @@ service cloud.firestore {
         && inspectionMatchesPlot(request.resource.data);
     }
 
+    match /aplicaciones/{aplicacionId} {
+      allow read: if canReadFieldCatalog();
+      allow create: if canReadFieldCatalog()
+        && request.resource.data.keys().hasOnly(['parcelaId', 'producto', 'dosis', 'fecha', 'tecnicoId'])
+        && request.resource.data.tecnicoId == request.auth.uid
+        && validText(request.resource.data.parcelaId, 128)
+        && request.resource.data.parcelaId.matches('[^/]+')
+        && exists(/databases/$(database)/documents/parcelas/$(request.resource.data.parcelaId))
+        && validText(request.resource.data.producto, 150)
+        && validText(request.resource.data.dosis, 100)
+        && request.resource.data.fecha is string
+        && request.resource.data.fecha.matches('[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])');
+    }
+
     match /productores/{productorId} {
       allow read: if canReadFieldCatalog();
       allow create: if canCreateCatalogRecords()

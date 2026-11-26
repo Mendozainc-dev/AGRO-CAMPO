@@ -1,6 +1,7 @@
 import { StyleSheet, Text } from 'react-native';
 
 import { ExpandableCard } from '@/components/ui/ExpandableCard';
+import { InspectionPhoto } from '@/components/InspectionPhoto';
 import type { Inspection } from '@/services/inspections';
 import type { Plot } from '@/services/producers-and-plots';
 
@@ -23,7 +24,7 @@ export function InspectionCard({ inspection, plot }: { inspection: Inspection; p
   return (
     <ExpandableCard
       title={plot?.ubicacion ?? 'Inspección de parcela'}
-      summary={[inspection.fecha, plot?.cultivo].filter(Boolean).join(' · ')}
+      summary={[inspection.fecha, plot?.cultivo, inspection.hasPhoto ? 'Con foto' : null].filter(Boolean).join(' · ')}
     >
       {inspection.tecnicoNombre && <Text style={styles.body}>Registrada por {inspection.tecnicoNombre}</Text>}
       {Number.isFinite(inspection.latitud) && Number.isFinite(inspection.longitud) && (
@@ -32,6 +33,7 @@ export function InspectionCard({ inspection, plot }: { inspection: Inspection; p
       {fields.filter(([, value]) => value !== '' && value != null).map(([label, value]) => (
         <Text key={label} style={styles.body}><Text style={styles.label}>{label}: </Text>{value}</Text>
       ))}
+      {inspection.hasPhoto && <InspectionPhoto inspectionId={inspection.id} />}
     </ExpandableCard>
   );
 }

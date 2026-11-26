@@ -6,6 +6,7 @@ import { isFieldDate } from '@/utils/field-date';
 
 import { getDatabase } from './firebase';
 import { getAppAuth } from './firebase-auth';
+import { inspectionPhotoBytes, inspectionPhotoCollection } from './inspection-photos';
 import type { Plot } from './producers-and-plots';
 
 type Coordinates = { latitude: number; longitude: number };
@@ -26,6 +27,7 @@ export type Inspection = InspectionFields & {
   latitud: number;
   longitud: number;
   detalles: Details;
+  hasPhoto: boolean;
 };
 
 export type InspectionDraft = InspectionFields & {
@@ -54,6 +56,7 @@ export async function readRecentInspections(): Promise<Inspection[]> {
       etapaFenologica: data.etapaFenologica,
       observaciones: data.observaciones,
       detalles: data.detalles ?? {},
+      hasPhoto: Array.isArray(data.fotos) && data.fotos.includes(`${inspectionPhotoCollection}/${document.id}`),
     };
   });
 }
@@ -87,7 +90,7 @@ function getDetails(crop: string, draft: InspectionDraft): Details {
   return details;
 }
 
-export async function createInspection(plot: Plot, coordinates: Coordinates, draft: InspectionDraft) {
+export async function createInspection(plot: Plot, coordinates: Coordinates, draft: InspectionDraft, photoBase64?: string) {
   const fecha = draft.fecha.trim();
   if (!isFieldDate(fecha)) {
     throw new Error('Ingresa una fecha válida en formato AAAA-MM-DD.');
@@ -110,7 +113,10 @@ export async function createInspection(plot: Plot, coordinates: Coordinates, dra
   }
 
   const reference = doc(collection(db, 'inspecciones'));
+  const jpeg = photoBase64 ? inspectionPhotoBytes(photoBase64) : null;
+  const photo = jpeg ? doc(db, inspectionPhotoCollection, reference.id) : null;
   await runTransaction(db, async (transaction) => {
+    if (photo && jpeg) transaction.set(photo, { jpeg });
     transaction.set(reference, {
       parcelaId: plot.id,
       fecha,
@@ -118,7 +124,7 @@ export async function createInspection(plot: Plot, coordinates: Coordinates, dra
       tecnicoNombre,
       latitud: latitude,
       longitud: longitude,
-      fotos: [],
+      fotos: photo ? [photo.path] : [],
       plagas: draft.plagas.trim(),
       estadoRiego: draft.estadoRiego.trim(),
       etapaFenologica: draft.etapaFenologica.trim(),

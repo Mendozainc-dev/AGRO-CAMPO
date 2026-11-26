@@ -1,5 +1,6 @@
 import { FirebaseError } from 'firebase/app';
 import { getCurrentPositionAsync, requestForegroundPermissionsAsync } from 'expo-location';
+import { Image } from 'expo-image';
 import { useRef, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -7,7 +8,7 @@ import { GlassButton } from '@/components/ui/GlassButton';
 import { GlassInput } from '@/components/ui/GlassInput';
 import { createInspection, type InspectionDraft } from '@/services/inspections';
 import type { Plot } from '@/services/producers-and-plots';
-
+import { captureInspectionPhoto } from '@/utils/capture-inspection-photo';
 import { todayFieldDate } from '@/utils/field-date';
 
 type InspectionEntryFormProps = {
@@ -19,12 +20,13 @@ type InspectionEntryFormProps = {
 export function InspectionEntryForm({ plots, onSaved, onBusyChange }: InspectionEntryFormProps) {
   const [plotId, setPlotId] = useState('');
   const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [photo, setPhoto] = useState<{ uri: string; base64: string } | null>(null);
   const [draft, setDraft] = useState<InspectionDraft>(() => ({
     fecha: todayFieldDate(), plagas: '', estadoRiego: '', etapaFenologica: '', observaciones: '',
     brix: '', humidity: '', irrigationSystem: '', soilPh: '',
   }));
   const [error, setError] = useState('');
-  const [action, setAction] = useState<'locate' | 'save' | null>(null);
+  const [action, setAction] = useState<'locate' | 'camera' | 'save' | null>(null);
   const pending = useRef(false);
   const plot = plots.find(({ id }) => id === plotId);
 
@@ -32,7 +34,7 @@ export function InspectionEntryForm({ plots, onSaved, onBusyChange }: Inspection
     setDraft((current) => ({ ...current, [field]: value }));
   }
 
-  async function run(kind: 'locate' | 'save', operation: () => Promise<void>) {
+  async function run(kind: 'locate' | 'camera' | 'save', operation: () => Promise<void>) {
     if (pending.current) return;
     pending.current = true;
     setAction(kind);
@@ -70,7 +72,7 @@ export function InspectionEntryForm({ plots, onSaved, onBusyChange }: Inspection
   function save() {
     return run('save', async () => {
       if (!plot || !coordinates) throw new Error('Selecciona una parcela y captura su ubicación GPS.');
-      await createInspection(plot, coordinates, draft);
+      await createInspection(plot, coordinates, draft, photo?.base64);
       onSaved();
     });
   }
@@ -88,7 +90,10 @@ export function InspectionEntryForm({ plots, onSaved, onBusyChange }: Inspection
           accessibilityState={{ checked: item.id === plotId, disabled }}
           disabled={disabled}
           onPress={() => {
-            if (item.id !== plotId) setCoordinates(null);
+            if (item.id !== plotId) {
+              setCoordinates(null);
+              setPhoto(null);
+            }
             setPlotId(item.id);
           }}
           style={[styles.option, item.id === plotId && styles.selected]}
@@ -100,6 +105,20 @@ export function InspectionEntryForm({ plots, onSaved, onBusyChange }: Inspection
       <GlassInput label="Fecha (AAAA-MM-DD)" value={draft.fecha} onChangeText={(value) => change('fecha', value)} maxLength={10} editable={!disabled} />
       <GlassButton label={action === 'locate' ? 'Buscando ubicación…' : 'Capturar GPS'} variant="secondary" onPress={locate} disabled={disabled || !plot} />
       {coordinates && <Text style={styles.body}>GPS: {coordinates.latitude.toFixed(5)}, {coordinates.longitude.toFixed(5)}</Text>}
+      <View style={styles.photoSection}>
+        <Text style={styles.label}>Foto de la inspección (opcional)</Text>
+        {photo && <Image source={photo.uri} style={styles.photo} contentFit="contain" accessibilityLabel="Vista previa de la foto" accessible />}
+        <GlassButton
+          label={action === 'camera' ? 'Preparando foto…' : photo ? 'Volver a tomar foto' : 'Tomar foto'}
+          variant="secondary"
+          disabled={disabled || !plot}
+          onPress={() => run('camera', async () => {
+            const captured = await captureInspectionPhoto();
+            if (captured) setPhoto(captured);
+          })}
+        />
+        {photo && <GlassButton label="Quitar foto" variant="secondary" disabled={disabled} onPress={() => setPhoto(null)} />}
+      </View>
       <GlassInput label="Plagas o hallazgos" value={draft.plagas} onChangeText={(value) => change('plagas', value)} maxLength={300} editable={!disabled} />
       <GlassInput label="Estado del riego" value={draft.estadoRiego} onChangeText={(value) => change('estadoRiego', value)} maxLength={100} editable={!disabled} />
       <GlassInput label="Etapa del cultivo" value={draft.etapaFenologica} onChangeText={(value) => change('etapaFenologica', value)} maxLength={100} editable={!disabled} />
@@ -127,4 +146,6 @@ const styles = StyleSheet.create({
   crop: { color: '#253128', fontSize: 14, fontWeight: '700', textTransform: 'capitalize' },
   body: { color: '#425447', fontSize: 14, lineHeight: 20 },
   error: { color: '#87292a', fontSize: 14 },
+  photoSection: { gap: 8 },
+  photo: { width: '100%', aspectRatio: 4 / 3, maxHeight: 260, borderRadius: 8, backgroundColor: '#f1f5ec' },
 });

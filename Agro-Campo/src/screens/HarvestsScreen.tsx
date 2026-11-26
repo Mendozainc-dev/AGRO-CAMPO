@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { HarvestEntryForm } from '@/components/HarvestEntryForm';
+import { FieldRecordList } from '@/components/FieldRecordList';
+import { ExpandableCard } from '@/components/ui/ExpandableCard';
 import { GlassButton } from '@/components/ui/GlassButton';
 import { useProducersAndPlots } from '@/hooks/use-producers-and-plots';
 import { readRecentHarvests, type Harvest } from '@/services/harvests';
@@ -62,21 +64,24 @@ export function HarvestsScreen() {
             </>
           )}
           {history.status === 'ready' && (
-            history.entries.length > 0
-              ? history.entries.map((entry) => {
+            <FieldRecordList
+              searchLabel="Buscar comprador, parcela o fecha"
+              emptyMessage="Aún no hay cosechas registradas."
+              records={history.entries.map((entry) => {
                 const plot = plotsById.get(entry.parcelaId);
-                return (
-                  <View key={entry.id} style={styles.card}>
-                    <View style={styles.cardHeader}>
-                      <Text accessibilityRole="header" style={styles.buyer}>{entry.comprador}</Text>
-                      <Text style={styles.date}>{entry.fecha}</Text>
-                    </View>
-                    <Text style={styles.body}>Volumen: {tonnes.format(entry.volumen)} t</Text>
-                    <Text style={styles.body}>{plot?.ubicacion ?? 'Parcela ' + entry.parcelaId}</Text>
-                  </View>
-                );
-              })
-              : <Text style={styles.body}>Aún no hay cosechas registradas.</Text>
+                return {
+                  id: entry.id,
+                  crops: plot ? [plot.cultivo] : [],
+                  searchText: () => [entry.comprador, entry.fecha, entry.parcelaId, plot?.ubicacion, plot?.cultivo].join(' '),
+                  render: () => (
+                    <ExpandableCard title={entry.comprador} summary={[entry.fecha, plot?.cultivo].filter(Boolean).join(' · ')}>
+                      <Text style={styles.body}>Volumen: {tonnes.format(entry.volumen)} t</Text>
+                      <Text style={styles.body}>Parcela: {plot?.ubicacion ?? entry.parcelaId}</Text>
+                    </ExpandableCard>
+                  ),
+                };
+              })}
+            />
           )}
         </>
       )}
@@ -99,9 +104,5 @@ const styles = StyleSheet.create({
   section: { gap: 12 },
   title: { color: '#172b1b', fontSize: 23, fontWeight: '700' },
   tabs: { flexDirection: 'row', gap: 6 },
-  card: { gap: 6, padding: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: '#d3dfd1', borderRadius: 10 },
-  cardHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  buyer: { color: '#172b1b', fontSize: 17, fontWeight: '700', flexShrink: 1 },
-  date: { color: '#224c31', backgroundColor: '#e7f1e5', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, fontSize: 12, fontWeight: '600' },
   body: { color: '#425447', fontSize: 14, lineHeight: 20 },
 });

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { FieldRecordList } from '@/components/FieldRecordList';
 import { InspectionCard } from '@/components/InspectionCard';
 import { InspectionEntryForm } from '@/components/InspectionEntryForm';
 import { GlassButton } from '@/components/ui/GlassButton';
@@ -61,9 +62,20 @@ export function InspectionsScreen() {
             </>
           )}
           {history.status === 'ready' && (
-            history.entries.length > 0
-              ? history.entries.map((inspection) => <InspectionCard key={inspection.id} inspection={inspection} plot={plotsById.get(inspection.parcelaId)} />)
-              : <Text style={styles.body}>Aún no hay inspecciones registradas.</Text>
+            <FieldRecordList
+              searchLabel="Buscar parcela, fecha, técnico o hallazgo"
+              emptyMessage="Aún no hay inspecciones registradas."
+              records={history.entries.map((inspection) => {
+                const plot = plotsById.get(inspection.parcelaId);
+                return {
+                  id: inspection.id,
+                  crops: plot ? [plot.cultivo] : [],
+                  searchText: () => [plot?.ubicacion, plot?.cultivo, inspection.parcelaId, inspection.fecha, inspection.tecnicoNombre,
+                    inspection.plagas, inspection.estadoRiego, inspection.etapaFenologica, inspection.observaciones].join(' '),
+                  render: () => <InspectionCard inspection={inspection} plot={plot} />,
+                };
+              })}
+            />
           )}
         </>
       )}

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { ApplicationEntryForm } from '@/components/ApplicationEntryForm';
+import { FieldRecordList } from '@/components/FieldRecordList';
+import { ExpandableCard } from '@/components/ui/ExpandableCard';
 import { GlassButton } from '@/components/ui/GlassButton';
 import { useProducersAndPlots } from '@/hooks/use-producers-and-plots';
 import { readRecentApplications, type FieldApplication } from '@/services/applications';
@@ -60,21 +62,24 @@ export function ApplicationsScreen() {
             </>
           )}
           {history.status === 'ready' && (
-            history.entries.length > 0
-              ? history.entries.map((entry) => {
+            <FieldRecordList
+              searchLabel="Buscar producto, parcela, fecha o dosis"
+              emptyMessage="Aún no hay aplicaciones registradas."
+              records={history.entries.map((entry) => {
                 const plot = plotsById.get(entry.parcelaId);
-                return (
-                  <View key={entry.id} style={styles.card}>
-                    <View style={styles.cardHeader}>
-                      <Text accessibilityRole="header" style={styles.product}>{entry.producto}</Text>
-                      <Text style={styles.date}>{entry.fecha}</Text>
-                    </View>
-                    <Text style={styles.body}>Dosis: {entry.dosis}</Text>
-                    <Text style={styles.body}>{plot?.ubicacion ?? 'Parcela ' + entry.parcelaId}</Text>
-                  </View>
-                );
-              })
-              : <Text style={styles.body}>Aún no hay aplicaciones registradas.</Text>
+                return {
+                  id: entry.id,
+                  crops: plot ? [plot.cultivo] : [],
+                  searchText: () => [entry.producto, entry.fecha, entry.parcelaId, plot?.ubicacion, plot?.cultivo, entry.dosis].join(' '),
+                  render: () => (
+                    <ExpandableCard title={entry.producto} summary={[entry.fecha, plot?.cultivo].filter(Boolean).join(' · ')}>
+                      <Text style={styles.body}>Dosis: {entry.dosis}</Text>
+                      <Text style={styles.body}>Parcela: {plot?.ubicacion ?? entry.parcelaId}</Text>
+                    </ExpandableCard>
+                  ),
+                };
+              })}
+            />
           )}
         </>
       )}
@@ -97,9 +102,5 @@ const styles = StyleSheet.create({
   section: { gap: 12 },
   title: { color: '#172b1b', fontSize: 23, fontWeight: '700' },
   tabs: { flexDirection: 'row', gap: 6 },
-  card: { gap: 6, padding: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: '#d3dfd1', borderRadius: 10 },
-  cardHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  product: { color: '#172b1b', fontSize: 17, fontWeight: '700', flexShrink: 1 },
-  date: { color: '#224c31', backgroundColor: '#e7f1e5', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, fontSize: 12, fontWeight: '600' },
   body: { color: '#425447', fontSize: 14, lineHeight: 20 },
 });

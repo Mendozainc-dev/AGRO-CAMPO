@@ -67,7 +67,7 @@ export function FieldLogScreen({ name }: FieldLogScreenProps) {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <StatusBar style="dark" />
-      <ScrollView style={styles.main} contentContainerStyle={styles.scroll}>
+      <ScrollView style={styles.main} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.content}>
           <View style={styles.section}>
             <View style={styles.brandRow}>

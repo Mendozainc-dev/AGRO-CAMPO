@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { CatalogEntryForm } from '@/components/CatalogEntryForm';
+import { FieldRecordList } from '@/components/FieldRecordList';
 import { ProducerCard } from '@/components/ProducerCard';
 import { GlassButton } from '@/components/ui/GlassButton';
 import { useProducersAndPlots } from '@/hooks/use-producers-and-plots';
@@ -50,9 +51,26 @@ export function ProducersAndPlotsScreen() {
       )}
 
       {mode === 'browse' && state.status === 'ready' && (
-        state.producers.length ? state.producers.map((producer) => <ProducerCard key={producer.id} producer={producer} />) : (
-          <Text style={styles.description}>Aún no hay productores registrados.</Text>
-        )
+        <FieldRecordList
+          searchLabel="Buscar productor, comunidad o parcela"
+          emptyMessage="Aún no hay productores registrados."
+          records={state.producers.map((producer) => ({
+            id: producer.id,
+            crops: producer.plots.map((plot) => plot.cultivo),
+            searchText: (crop) => [
+              producer.nombre,
+              producer.comunidad,
+              ...producer.plots.filter((plot) => !crop || plot.cultivo === crop)
+                .flatMap((plot) => [plot.cultivo, plot.ubicacion]),
+            ].join(' '),
+            render: (crop) => (
+              <ProducerCard producer={crop
+                ? { ...producer, plots: producer.plots.filter((plot) => plot.cultivo === crop) }
+                : producer}
+              />
+            ),
+          }))}
+        />
       )}
     </View>
   );

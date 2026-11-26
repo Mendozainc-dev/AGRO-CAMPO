@@ -10,6 +10,14 @@ import { ProducersAndPlotsScreen } from './ProducersAndPlotsScreen';
 import { InspectionsScreen } from './InspectionsScreen';
 import { ApplicationsScreen } from './ApplicationsScreen';
 import { HarvestsScreen } from './HarvestsScreen';
+import { FieldLogHomeScreen } from './FieldLogHomeScreen';
+
+const homeModule = {
+  id: 'inicio',
+  label: 'Inicio',
+  Screen: FieldLogHomeScreen,
+  icon: { ios: 'house.fill', android: 'home', web: 'home' },
+} as const;
 
 const modules = [
   {
@@ -25,6 +33,7 @@ const modules = [
     Screen: InspectionsScreen,
     icon: { ios: 'clipboard', android: 'assignment', web: 'assignment' },
   },
+  homeModule,
   {
     id: 'aplicaciones',
     label: 'Aplicaciones',
@@ -52,7 +61,7 @@ type FieldLogScreenProps = {
 export function FieldLogScreen({ name }: FieldLogScreenProps) {
   const router = useRouter();
   const { section } = useLocalSearchParams<{ section?: string }>();
-  const activeModule = modules.find((module) => module.id === section) ?? modules[0];
+  const activeModule = modules.find((module) => module.id === section) ?? homeModule;
   const ActiveScreen = activeModule.Screen;
 
   return (
@@ -82,6 +91,7 @@ export function FieldLogScreen({ name }: FieldLogScreenProps) {
         <View accessibilityRole="tablist" style={styles.tabs}>
           {modules.map((module) => {
             const selected = module.id === activeModule.id;
+            const isHome = module.id === homeModule.id;
             return (
               <Pressable
                 key={module.id}
@@ -91,13 +101,15 @@ export function FieldLogScreen({ name }: FieldLogScreenProps) {
                 onPress={() => router.setParams({ section: module.id })}
                 style={({ pressed }) => [styles.tab, selected && styles.selected, pressed && styles.pressed]}
               >
-                <SymbolView
-                  name={module.icon}
-                  tintColor={selected ? '#224c31' : '#536459'}
-                  size={23}
-                  style={styles.icon}
-                />
-                <Text style={[styles.label, selected && styles.selectedLabel]}>{module.label}</Text>
+                <View style={[styles.iconFrame, isHome && styles.homeIconFrame]}>
+                  <SymbolView
+                    name={module.icon}
+                    tintColor={isHome || selected ? '#24613a' : '#536459'}
+                    size={23}
+                    style={styles.icon}
+                  />
+                </View>
+                <Text style={[styles.label, (isHome || selected) && styles.selectedLabel]}>{module.label}</Text>
               </Pressable>
             );
           })}
@@ -139,6 +151,8 @@ const styles = StyleSheet.create({
   },
   selected: { backgroundColor: '#e7f0e6' },
   pressed: { opacity: 0.7 },
+  iconFrame: { width: 36, height: 30, alignItems: 'center', justifyContent: 'center' },
+  homeIconFrame: { backgroundColor: '#d8edda', borderRadius: 8 },
   icon: { width: 23, height: 23 },
   label: { color: '#536459', fontSize: 11, textAlign: 'center' },
   selectedLabel: { color: '#224c31', fontWeight: '700' },
